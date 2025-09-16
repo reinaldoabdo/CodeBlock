@@ -1,0 +1,177 @@
+
+# Project: CodeBlock VS Code Extension
+
+## Objective
+
+Create a VS Code extension that wraps a block of code in a "fieldset" like border, using a comment as the "legend". The activation mechanism is `>>>` before the legend comment and `<<<` in a comment at the end of the block.
+
+## Project Structure
+
+```
+/home/reinaldo/Dev/CodeBlock/
+├───README.md
+└───.git/
+└───code-block-extension/
+    ├───.vscode/
+    │   ├───extensions.json
+    │   ├───launch.json
+    │   ├───settings.json
+    │   └───tasks.json
+    ├───out/
+    │   ├───test/
+    │   │   └───suite/
+    │   │       ├───index.js
+    │   │       └───index.js.map
+    │   ├───extension.js
+    │   └───extension.js.map
+    ├───src/
+    │   ├───test/
+    │   │   ├───suite/
+    │   │   │   └───index.ts
+    │   │   ├───empty.js
+    │   │   └───extension.test.ts
+    │   └───extension.ts
+    ├───.gitignore
+    ├───.vscode-test.mjs
+    ├───.vscodeignore
+    ├───CHANGELOG.md
+    ├───eslint.config.mjs
+    ├───launch.js
+    ├───package-lock.json
+    ├───package.json
+    ├───README.md
+    ├───tsconfig.json
+    └───vsc-extension-quickstart.md
+```
+
+## File Content
+
+### `src/extension.ts`
+
+```typescript
+import * as vscode from 'vscode';
+
+export function activate(context: vscode.ExtensionContext) {
+
+    const decorationType = vscode.window.createTextEditorDecorationType({
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: '4px',
+        isWholeLine: true,
+    });
+
+    let activeEditor = vscode.window.activeTextEditor;
+
+    function updateDecorations() {
+        if (!activeEditor) {
+            return;
+        }
+
+        const text = activeEditor.document.getText();
+        const decorations: vscode.DecorationOptions[] = [];
+        const regex = />>>\s*(.*)[\s\S]*?<<</g;
+        let match;
+
+        while (match = regex.exec(text)) {
+            const startPos = activeEditor.document.positionAt(match.index);
+            const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+            const legend = match[1];
+
+            const decoration = {
+                range: new vscode.Range(startPos, endPos),
+                hoverMessage: 'Code Block',
+                renderOptions: {
+                    before: {
+                        contentText: legend,
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        margin: '0 0 0 1em',
+                    }
+                }
+            };
+
+            decorations.push(decoration);
+        }
+
+        activeEditor.setDecorations(decorationType, decorations);
+    }
+
+    if (activeEditor) {
+        updateDecorations();
+    }
+
+    vscode.window.onDidChangeActiveTextEditor(editor => {
+        activeEditor = editor;
+        if (editor) {
+            updateDecorations();
+        }
+    }, null, context.subscriptions);
+
+    vscode.workspace.onDidChangeTextDocument(event => {
+        if (activeEditor && event.document === activeEditor.document) {
+            updateDecorations();
+        }
+    }, null, context.subscriptions);
+}
+
+export function deactivate() {}
+```
+
+### `package.json`
+
+```json
+{
+  "name": "code-block",
+  "displayName": "Code Block",
+  "description": "A simple extension to wrap code blocks in a fieldset-like border.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "code-block.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.104.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "eslint": "^9.34.0",
+    "typescript": "^5.9.2",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
+```
+
+## Steps Taken
+
+1.  **Project Setup**: Created a new VS Code extension project using `yo code`.
+2.  **Core Logic**: Implemented the core logic of the extension in `src/extension.ts`.
+    *   Created a `vscode.TextEditorDecorationType` to define the style of the border and legend.
+    *   Used `vscode.workspace.onDidChangeTextDocument` and `vscode.window.onDidChangeActiveTextEditor` to trigger updates.
+    *   Implemented the decoration logic to find code blocks and apply the decorations.
+3.  **Testing**: Attempted to test the extension in a development environment.
+    *   Tried using `npm test`, but it ran in a headless environment.
+    *   Tried using `@vscode/test-electron` to launch the UI, but encountered issues.
+    *   Finally, launched the extension in development mode using the `code` command with the `--extensionDevelopmentPath` argument.
+
