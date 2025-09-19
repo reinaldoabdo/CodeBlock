@@ -9,7 +9,10 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:php",
+    "onCommand:code-block.helloWorld"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [

@@ -4,18 +4,20 @@
   "description": "A simple extension to wrap code blocks in a fieldset-like border.",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.104.0"
+    "vscode": "^1.103.2"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "code-block.helloWorld",
-        "title": "Hello World"
+        "command": "code-block.toggle",
+        "title": "Toggle Code Block Decorations"
       }
     ]
   },
